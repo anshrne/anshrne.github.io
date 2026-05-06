@@ -1,98 +1,340 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<title>World Map Explorer</title>
+    <meta charset="UTF-8">
+    <title>World Map Explorer</title>
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-<style>
-body {
-    background: #0b1320;
+    <style>
+        body {
+            background: #0b1320;
+            color: white;
+            scroll-behavior: smooth;
+        }
+
+        /* HERO / HOME SECTION */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+
+            /* BACKGROUND IMAGE */
+            background:
+                linear-gradient(rgba(11, 19, 32, 0.6), rgba(11, 19, 32, 0.9)),
+                url('https://www.gstatic.com/earth/social/00_generic_facebook-001.jpg');
+
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+
+
+        /* GLASS NAVBAR */
+        .glass-nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Optional: improve text contrast */
+        .glass-nav .navbar-brand,
+        .glass-nav .btn {
+            color: white !important;
+        }
+
+        .glass-nav.scrolled {
+            background: rgba(11, 19, 32, 0.8);
+        }
+
+        /* MODAL ANIMATION */
+        .modal.fade .modal-dialog {
+            transform: scale(0.8);
+            transition: all 0.3s ease;
+        }
+
+        .modal.show .modal-dialog {
+            transform: scale(1);
+        }
+
+        /* COUNTRY CARD */
+        .country-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            cursor: pointer;
+            transition: 0.3s;
+            height: 100%;
+        }
+
+        .country-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .country-flag {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .country-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .country-card {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 15px;
+    padding: 15px;
+    cursor: pointer;
+    transition: 0.3s;
+    height: 100%;
     color: white;
 }
 
-#map {
-    height: 600px;
-    border-radius: 15px;
+.country-card small {
+    color: rgba(255,255,255,0.7);
 }
 
-.card {
-    border-radius: 15px;
+.country-flag {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 10px;
 }
-</style>
+
+
+    </style>
 </head>
 
 <body>
 
-<nav class="navbar navbar-dark bg-dark px-3">
-    <a href="index.html" class="navbar-brand">🌍 World Explorer</a>
-    <a href="regions.html" class="btn btn-outline-light btn-sm">Regions</a>
-</nav>
+    <nav class="navbar navbar-dark px-3 glass-nav">
+        <a href="#" class="navbar-brand"> World Explorer</a>
+        <a href="regions.html" class="btn btn-outline-light btn-sm">Regions</a>
+    </nav>
 
-<div class="container mt-3">
+    <!-- HERO / LANDING PAGE -->
+    <section class="hero">
+        <h1> World Map Explorer</h1>
+        <p>
+            Discover countries, explore regions, and learn more about the world—
+            all in one interactive map experience.
+        </p>
+        <button class="btn btn-primary" onclick="document.getElementById('explore').scrollIntoView()">
+            Start Exploring
+        </button>
+    </section>
 
-<!-- SEARCH -->
-<div class="row mb-3">
-    <div class="col-md-8">
-        <input id="searchInput" class="form-control" placeholder="Search country (e.g. Philippines)">
+    <!-- MAIN CONTENT -->
+    <div id="explore" class="container mt-4">
+
+        <!-- SEARCH -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <input id="searchInput" class="form-control" placeholder="Search country (e.g. Philippines)">
+            </div>
+            <div class="col-md-4">
+                <button class="btn btn-primary w-100" onclick="searchCountry()">Search & Pin</button>
+            </div>
+        </div>
+
+        <!-- ADD THIS TITLE -->
+        <h5 class="mt-4 mb-3">🌍 Explore Countries</h5>
+
+        <!-- CARDS -->
+        <div id="countryCards" class="row g-3"></div>
+
+        <!-- COUNTRY CARDS -->
+        <div id="countryCards" class="row mt-4 g-3"></div>
+
+        <!-- MAP -->
+        <div id="map"></div>
+
+
+
     </div>
-    <div class="col-md-4">
-        <button class="btn btn-primary w-100" onclick="searchCountry()">Search & Pin</button>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+
+        const map = L.map('map').setView([20, 0], 2);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        let marker;
+        let miniMap;
+
+        async function searchCountry() {
+
+            const query = document.getElementById("searchInput").value.trim();
+            if (!query) return;
+
+            const res = await fetch(`https://restcountries.com/v3.1/name/${query}`);
+            const data = await res.json();
+
+            const country = data[0];
+
+            const name = country.name.common;
+            const lat = country.latlng[0];
+            const lng = country.latlng[1];
+
+            // MAIN MAP MARKER
+            if (marker) map.removeLayer(marker);
+
+            marker = L.marker([lat, lng]).addTo(map)
+                .bindPopup(name)
+                .openPopup();
+
+            map.setView([lat, lng], 4);
+
+            // FLAG
+            document.getElementById("modalFlag").src = country.flags.png;
+
+            // CURRENCY
+            const currency = country.currencies
+                ? Object.values(country.currencies)[0].name
+                : "N/A";
+
+            // LANGUAGE
+            const language = country.languages
+                ? Object.values(country.languages).join(", ")
+                : "N/A";
+
+            // MODAL TEXT
+            document.getElementById("modalCountryName").innerText = name;
+
+            document.getElementById("modalCountryInfo").innerText =
+                `Capital: ${country.capital?.[0] || "N/A"}
+Population: ${country.population.toLocaleString()}
+Region: ${country.region}
+Currency: ${currency}
+Language: ${language}`;
+
+            // SHOW MODAL
+            const modal = new bootstrap.Modal(document.getElementById('countryModal'));
+            modal.show();
+
+            // MINI MAP
+            setTimeout(() => {
+
+                if (miniMap) miniMap.remove();
+
+                miniMap = L.map('miniMap').setView([lat, lng], 4);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+                    .addTo(miniMap);
+
+                L.marker([lat, lng]).addTo(miniMap);
+
+            }, 300);
+        }
+
+        async function loadCountries() {
+
+            const res = await fetch("https://restcountries.com/v3.1/all");
+            const data = await res.json();
+
+            const container = document.getElementById("countryCards");
+            container.innerHTML = "";
+
+            data
+                .filter(c => c.latlng && c.latlng.length === 2)
+                .slice(0, 12)
+                .forEach(country => {
+
+                    const name = country.name.common;
+                    const lat = country.latlng[0];
+                    const lng = country.latlng[1];
+                    const flag = country.flags.png;
+
+                    const col = document.createElement("div");
+                    col.className = "col-md-3";
+
+                    col.innerHTML = `
+            <div class="country-card" onclick="selectCountry('${name}', ${lat}, ${lng})">
+                <img src="${flag}" class="country-flag">
+                <div class="country-name">${name}</div>
+                <small>${country.region || 'N/A'}</small>
+            </div>
+        `;
+
+                    container.appendChild(col);
+                });
+        }
+
+        function selectCountry(name, lat, lng) {
+
+            if (marker) map.removeLayer(marker);
+
+            marker = L.marker([lat, lng]).addTo(map)
+                .bindPopup(name)
+                .openPopup();
+
+            map.setView([lat, lng], 4);
+
+            document.getElementById("searchInput").value = name;
+
+            // FIX: directly call search WITHOUT invalid query check
+            searchCountry();
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadCountries();
+        });
+
+    </script>
+
+
+    <!-- COUNTRY MODAL -->
+    <div class="modal fade" id="countryModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content bg-dark text-white rounded-4 shadow-lg">
+
+                <div class="modal-header border-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <img id="modalFlag" width="40" height="25" style="border-radius:4px;">
+                        <h5 class="modal-title" id="modalCountryName">Country</h5>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <!-- MINI MAP -->
+                    <div id="miniMap" style="height:200px; border-radius:10px;" class="mb-3"></div>
+
+                    <!-- DETAILS -->
+                    <p id="modalCountryInfo" style="line-height:1.6;"></p>
+
+                </div>
+
+            </div>
+        </div>
     </div>
-</div>
 
-<!-- MAP -->
-<div id="map"></div>
-
-<!-- INFO -->
-<div class="card mt-3 p-3 text-dark">
-    <h5 id="countryName">---</h5>
-    <p id="countryInfo">Search a country to see details.</p>
-</div>
-
-</div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<script>
-
-const map = L.map('map').setView([20, 0], 2);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-let marker;
-
-// SEARCH COUNTRY + PIN MAP
-async function searchCountry() {
-
-    const query = document.getElementById("searchInput").value;
-
-    const res = await fetch(`https://restcountries.com/v3.1/name/${query}`);
-    const data = await res.json();
-
-    const country = data[0];
-
-    const name = country.name.common;
-    const lat = country.latlng[0];
-    const lng = country.latlng[1];
-
-    // REMOVE OLD MARKER
-    if (marker) map.removeLayer(marker);
-
-    marker = L.marker([lat, lng]).addTo(map)
-        .bindPopup(name)
-        .openPopup();
-
-    map.setView([lat, lng], 4);
-
-    document.getElementById("countryName").innerText = name;
-    document.getElementById("countryInfo").innerText =
-        `Capital: ${country.capital?.[0] || "N/A"} | Population: ${country.population.toLocaleString()} | Region: ${country.region}`;
-}
-
-</script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
+
 </html>
