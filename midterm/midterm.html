@@ -281,6 +281,62 @@
     transform: scale(1.05);
     filter: brightness(1.1);
 }
+/* FIX SEARCH INPUT TEXT + AUTOFILL */
+.search-input,
+.search-input:focus {
+    color: white !important;
+}
+
+/* Prevent Chrome autofill turning it white */
+.search-input:-webkit-autofill,
+.search-input:-webkit-autofill:hover,
+.search-input:-webkit-autofill:focus,
+.search-input:-webkit-autofill:active {
+    -webkit-text-fill-color: white !important;
+    -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+    transition: background-color 9999s ease-in-out 0s;
+    background-color: transparent !important;
+}
+
+.recent-item {
+    display: inline-block;
+    margin: 5px;
+    padding: 6px 14px;
+
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 50px;
+
+    font-size: 13px;
+    cursor: pointer;
+
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+
+    transition: 0.2s ease;
+}
+
+.recent-item:hover {
+    background: rgba(255,255,255,0.12);
+    transform: scale(1.05);
+}
+
+
+#recentBox {
+    display: block;
+    width: 100%;
+    text-align: center;
+    margin-top: 12px;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+section, .about-premium {
+    scroll-margin-top: 80px;
+}
+
     </style>
 </head>
 
@@ -300,19 +356,63 @@
 </div>
 
 <!-- HERO -->
-<section class="hero">
+ 
+<section class="hero" id="home">
     <h1>World Map Explorer</h1>
     <p>Search countries and explore detailed information</p>
 
     <a href="#main" class="explore-btn">Explore</a>
 </section>
 
+<!-- TITLE / STATEMENT (NEW) -->
+ <section id="search"></section>
+    <div style="text-align:center;  margin-top:50px;">
+        <h2 style="font-weight:700; letter-spacing:-0.5px;">
+            Search & Discover Countries
+        </h2>
+        <p style="color:rgba(255,255,255,0.7); max-width:600px; margin:auto;">
+            Type a country name and instantly explore its flag, capital, population, language, and location.
+        </p>
+    </div>
+
 <!-- MAIN -->
 <div class="main">
-    <div id="main" class="main"></div>
+
+
+
+    <div class="search-container">
+        <div class="search-glass">
+
+            <input id="searchInput"
+                   class="search-input"
+                   placeholder="Search a country (e.g. Philippines)">
+
+            <button class="search-btn" onclick="searchCountry()">
+                Search
+            </button>
+
+        </div>
+    </div>
+
+    <!-- RECENT SEARCHES (IMPORTANT: OUTSIDE search-container) -->
+    <div id="recentBox"></div>
+    <div class="section-divider"></div>
+
+</section>
+
+<div class="section-divider"></div>
+
+<div class="about-premium" id="about">
+
+    </div>
+
+</div>
+    </section>
+
+</div>
 
     <!-- ABOUT -->
-  <div class="about-premium">
+  <div class="about-premium" id="about">
 
     <div class="about-hero">
         <h2>Explore the world in a smarter way</h2>
@@ -350,26 +450,7 @@
     
 </div>
 
-    <!-- SEARCH -->
-    <section id="search">
-        <div class="search-container">
-
-    <div class="search-glass">
-
-        <input id="searchInput"
-               class="search-input"
-               placeholder="Search a country (e.g. Philippines)">
-
-        <button class="search-btn" onclick="searchCountry()">
-            Search
-        </button>
-
-    </div>
-
-</div>
-    </section>
-
-</div>
+    
 
 <!-- MODAL -->
 <div class="modal fade" id="countryModal" tabindex="-1">
@@ -408,20 +489,30 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
+let recentSearches = JSON.parse(localStorage.getItem("recentSearches")) || [];
 
 let modalMap;
 
 // NAV FUNCTIONS
 function scrollToTop() {
-    document.getElementById("home").scrollIntoView({ behavior: "smooth" });
+    document.getElementById("home").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
 }
 
 function scrollToAbout() {
-    document.getElementById("about").scrollIntoView({ behavior: "smooth" });
+    document.getElementById("about").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
 }
 
 function scrollToSearch() {
-    document.getElementById("search").scrollIntoView({ behavior: "smooth" });
+    document.getElementById("search").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
 }
 
 // SEARCH COUNTRY
@@ -436,6 +527,7 @@ async function searchCountry() {
     const country = data[0];
 
     const name = country.name.common;
+    saveRecentSearch(name);
     const lat = country.latlng[0];
     const lng = country.latlng[1];
 
@@ -465,6 +557,49 @@ Language: ${country.languages ? Object.values(country.languages).join(", ") : "N
 
     }, 300);
 }
+
+function renderRecentSearches() {
+
+    const box = document.getElementById("recentBox");
+
+    if (!recentSearches.length) {
+        box.innerHTML = "";
+        return;
+    }
+
+    box.innerHTML = `
+        <div style="color:rgba(255,255,255,0.6); font-size:13px; margin-bottom:6px;">
+            Recently searched
+        </div>
+        ${recentSearches.map(name => `
+            <span class="recent-item" onclick="searchAgain('${name}')">
+                ${name}
+            </span>
+        `).join("")}
+    `;
+}
+
+function searchAgain(name) {
+    document.getElementById("searchInput").value = name;
+    searchCountry();
+}
+
+function saveRecentSearch(name) {
+
+    if (!name) return;
+
+    recentSearches = recentSearches.filter(item => item !== name);
+
+    recentSearches.unshift(name);
+
+    recentSearches = recentSearches.slice(0, 5);
+
+    localStorage.setItem("recentSearches", JSON.stringify(recentSearches));
+
+    renderRecentSearches();
+}
+
+renderRecentSearches();
 
 </script>
 
