@@ -361,7 +361,9 @@ section, .about-premium {
     <h1>World Map Explorer</h1>
     <p>Search countries and explore detailed information</p>
 
-    <a href="#main" class="explore-btn">Explore</a>
+    <a href="javascript:void(0)" class="explore-btn" onclick="scrollToSearchSection()">
+    Explore
+</a>
 </section>
 
 <!-- TITLE / STATEMENT (NEW) -->
@@ -379,7 +381,7 @@ section, .about-premium {
 <div class="main">
 
 
-
+<section id="main">
     <div class="search-container">
         <div class="search-glass">
 
@@ -411,35 +413,47 @@ section, .about-premium {
 
 </div>
 
-    <!-- ABOUT -->
-  <div class="about-premium" id="about">
+   <!-- ABOUT -->
+<section id="about" class="about-premium">
 
     <div class="about-hero">
         <h2>Explore the world in a smarter way</h2>
+
         <p>
-            World Map Explorer helps you discover countries instantly with clean visuals,
-            real-time data, and an interactive global map experience.
+            World Map Explorer is an interactive web application designed to help users discover countries instantly.
+            It combines live country data, a smooth map interface, and a user-friendly design to make global exploration easy and fun.
         </p>
     </div>
 
     <div class="about-features">
 
         <div class="feature-card">
-            <h3>Global Discovery</h3>
-            <p>Search any country and instantly view its location, flag, and key information.</p>
+            <h4>Global Discovery</h4>
+            <p>
+                Instantly search and explore any country in the world.
+                Get quick access to essential geographic and cultural information in one place.
+            </p>
         </div>
 
         <div class="feature-card">
-            <h3>Interactive Map</h3>
-            <p>Zoom and explore the world with a smooth, real-time Leaflet map experience.</p>
+            <h4>Interactive Map Experience</h4>
+            <p>
+                Navigate a smooth, zoomable world map powered by Leaflet.
+                Visually explore locations with precise markers and real-time positioning.
+            </p>
         </div>
 
         <div class="feature-card">
-            <h3>Instant Data</h3>
-            <p>Live country data including population, capital, language, and currency.</p>
+            <h4>Live Country Data</h4>
+            <p>
+                View up-to-date information including population, capital city,
+                languages spoken, region, and currency details instantly after searching.
+            </p>
         </div>
 
     </div>
+
+</section>
 
     <div class="about-footer">
         <p>Built with REST Countries API + Leaflet Maps</p>
@@ -509,6 +523,13 @@ function scrollToAbout() {
 }
 
 function scrollToSearch() {
+    document.getElementById("search").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+}
+
+function scrollToSearchSection() {
     document.getElementById("search").scrollIntoView({
         behavior: "smooth",
         block: "start"
